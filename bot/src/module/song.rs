@@ -674,6 +674,21 @@ impl command::Handler for Handler {
                     }
                 }
             }
+            Some("block") => {
+                ctx.check_scope(Scope::SongEditQueue).await?;
+
+                match ctx.next().as_deref() {
+                    Some("current") => {
+
+                    }
+                    Some(arg) => {
+
+                    }
+                    None => {
+                        respond!(ctx, "Expected: current, <position>, or <uri>");
+                    }
+                }
+            }
             _ => {
                 let mut alts = Vec::new();
 
@@ -685,11 +700,13 @@ impl command::Handler for Handler {
 
                 if ctx.user.has_scope(Scope::SongEditQueue).await {
                     alts.push("promote");
+                    alts.push("block");
                     alts.push("close");
                     alts.push("open");
                     alts.push("purge");
                 } else {
                     alts.push("promote 🛇");
+                    alts.push("block 🛇");
                     alts.push("close 🛇");
                     alts.push("open 🛇");
                     alts.push("purge 🛇");
