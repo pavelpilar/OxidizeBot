@@ -90,6 +90,14 @@ table! {
     }
 }
 
+table! {
+    blocked_songs (track_id) {
+        track_id -> Text,
+        blocked_by -> Text,
+        blocked_at -> Timestamp,
+    }
+}
+
 // Grants that have been initialized from their default configuration.
 table! {
     initialized_grants (scope) {

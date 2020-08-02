@@ -1,5 +1,6 @@
 use super::schema::{
-    after_streams, aliases, bad_words, balances, commands, promotions, songs, themes,
+    after_streams, aliases, bad_words, balances,
+    commands, promotions, songs, themes, blocked_songs,
 };
 use crate::track_id::TrackId;
 use chrono::NaiveDateTime;
@@ -198,4 +199,11 @@ pub struct UpdateTheme<'a> {
     pub end: i32,
     pub group: Option<&'a str>,
     pub disabled: Option<bool>,
+}
+
+#[derive(Debug, diesel::Queryable, diesel::Insertable)]
+pub struct BlockedSong {
+    pub track_id: TrackId,
+    pub blocked_by: String,
+    pub blocked_at: NaiveDateTime,
 }
