@@ -217,6 +217,26 @@ impl Database {
         })
         .await
     }
+
+    /// Block the given Track ID.
+    pub async fn block_track_id(&self, user: &str, track_id: &TrackId) -> Result<(), Error> {
+        use self::schema::blocked_songs::dsl;
+
+        let track_id = track_id.clone();
+        let blocked_song = models::BlockedSong {
+            track_id,
+            blocked_by: String::from(user),
+            blocked_at: Utc::now().naive_utc(),
+        };
+
+        self.asyncify(move |c| {
+            diesel::insert_into(dsl::blocked_songs)
+                .values(blocked_song)
+                .execute(c)?;
+            Ok(())
+        })
+        .await
+    }
 }
 
 /// Convert a user display name into a user id.

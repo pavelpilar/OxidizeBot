@@ -383,6 +383,20 @@ impl Player {
         Ok(promoted)
     }
 
+    /// Block the given song from being requested again and remove it from the queue.
+    pub async fn block_queued_song(&self, user: &str, n: usize) -> Result<Option<Arc<Item>>> {
+        let mut inner = self.inner.write().await;
+        let res = inner.mixer.block_queued_song(user, n).await?;
+        Ok(res)
+    }
+
+    /// Block the given Track ID.
+    pub async fn block_track_id(&self, user: &str, track_id: &TrackId) -> Result<()> {
+        let inner = self.inner.read().await;
+        inner.mixer.block_track_id(user, track_id).await?;
+        Ok(())
+    }
+
     /// Toggle playback.
     pub async fn toggle(&self) -> Result<()> {
         let mut inner = self.inner.write().await;

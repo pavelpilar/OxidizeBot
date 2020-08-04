@@ -678,11 +678,61 @@ impl command::Handler for Handler {
                 ctx.check_scope(Scope::SongEditQueue).await?;
 
                 match ctx.next().as_deref() {
-                    Some("current") => {
-
-                    }
+                    Some("current") => match player.current().await {
+                        Some(current) => {
+                            player
+                                .block_track_id(ctx.user.name().unwrap(), &current.item.track_id)
+                                .await?;
+                            player.skip().await?;
+                            ctx.respond(format!(
+                                "Blocked song {} from being requested again",
+                                current.item.track.name()
+                            ))
+                            .await;
+                        }
+                        None => {
+                            respond!(ctx, "No song is currently playing");
+                        }
+                    },
                     Some(arg) => {
-
+                        match TrackId::parse_with_urls(arg) {
+                            Ok(track_id) => {
+                                match player
+                                    .block_track_id(ctx.user.name().unwrap(), &track_id)
+                                    .await
+                                {
+                                    Ok(_) => {
+                                        ctx.respond(format!(
+                                            "Blocked song with the URI {} from being requested",
+                                            arg
+                                        ))
+                                        .await;
+                                    }
+                                    Err(_) => {
+                                        // TODO: Different response if song already blocked or something else
+                                        respond!(ctx, "Block command failed");
+                                    }
+                                };
+                            }
+                            Err(_) => {
+                                let n = parse_block_queue_position(arg).await?;
+                                let item = player
+                                    .block_queued_song(ctx.user.name().unwrap(), n)
+                                    .await?;
+                                match item {
+                                    Some(item) => {
+                                        ctx.respond(format!(
+                                            "Blocked song {} and removed it from queue",
+                                            item.track.name()
+                                        ))
+                                        .await;
+                                    }
+                                    None => {
+                                        respond!(ctx, "Block command failed");
+                                    }
+                                }
+                            }
+                        };
                     }
                     None => {
                         respond!(ctx, "Expected: current, <position>, or <uri>");
@@ -860,6 +910,15 @@ async fn parse_queue_position(n: &str) -> Result<usize> {
         Ok(0) => respond_bail!("Can't mess with the current song :("),
         Ok(n) => Ok(n.saturating_sub(1)),
         Err(_) => respond_bail!("Expected whole number argument"),
+    }
+}
+
+/// Parse a queue position for blocking.
+async fn parse_block_queue_position(n: &str) -> Result<usize> {
+    match str::parse::<usize>(n) {
+        Ok(0) => respond_bail!("Use current for blocking the current song"),
+        Ok(n) => Ok(n.saturating_sub(1)),
+        Err(_) => respond_bail!("Expected whole number argument or URI"),
     }
 }
 

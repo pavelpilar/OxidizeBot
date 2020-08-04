@@ -178,6 +178,31 @@ impl Mixer {
         Ok(None)
     }
 
+    /// Block the given song.
+    pub(super) async fn block_queued_song(
+        &mut self,
+        user: &str,
+        n: usize,
+    ) -> Result<Option<Arc<Item>>> {
+        if self.queue.is_empty() || n >= self.queue.len() {
+            return Ok(None);
+        }
+
+        if let Some(removed) = self.queue.remove(n) {
+            self.db.block_track_id(user, &removed.track_id).await?;
+            Ok(Some(removed))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// Block the given Track ID.
+    pub(super) async fn block_track_id(&self, user: &str, track_id: &TrackId) -> Result<()> {
+        self.db.block_track_id(user, track_id).await?;
+        // TODO: Check if given Track ID is in queue
+        Ok(())
+    }
+
     /// Check if a song has been queued within the specified period of time.
     pub(super) async fn last_song_within(
         &self,
