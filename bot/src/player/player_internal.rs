@@ -777,6 +777,17 @@ impl PlayerInternal {
         max_duration: Option<utils::Duration>,
         market: Option<&str>,
     ) -> Result<(Option<usize>, Arc<Item>), AddTrackError> {
+        match self.mixer.track_id_blocked(&track_id).await {
+            Ok(blocked) => {
+                if blocked {
+                    return Err(AddTrackError::TrackBlocked);
+                }
+            }
+            Err(e) => {
+                return Err(AddTrackError::Error(e));
+            }
+        }
+
         let (user_count, len) = {
             if !bypass_constraints {
                 if let Some(reason) = &self.closed {

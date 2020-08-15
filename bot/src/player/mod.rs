@@ -694,6 +694,8 @@ pub enum AddTrackError {
     UnsupportedPlaybackMode,
     /// Song cannot be played in the streamer's region
     NotPlayable,
+    /// This song is blocked
+    TrackBlocked,
     /// Other generic error happened.
     Error(anyhow::Error),
 }

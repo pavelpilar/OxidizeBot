@@ -203,6 +203,12 @@ impl Mixer {
         Ok(())
     }
 
+    /// Check if given Track ID is blocked.
+    pub(super) async fn track_id_blocked(&self, track_id: &TrackId) -> Result<bool> {
+        let res = self.db.track_id_blocked(track_id).await?;
+        Ok(res)
+    }
+ 
     /// Check if a song has been queued within the specified period of time.
     pub(super) async fn last_song_within(
         &self,

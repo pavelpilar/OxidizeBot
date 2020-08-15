@@ -274,6 +274,14 @@ impl Handler {
 
                 return Ok(());
             }
+            Err(AddTrackError::TrackBlocked) => {
+                respond!(
+                    user,
+                    "That song has been blocked from song request"
+                );
+
+                return Ok(());
+            }
             Err(AddTrackError::Error(e)) => {
                 return Err(e);
             }
