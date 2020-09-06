@@ -2,6 +2,7 @@
 mod macros;
 mod after_streams;
 mod aliases;
+mod blocked_songs;
 pub(crate) mod commands;
 mod matcher;
 pub(crate) mod models;
@@ -19,6 +20,7 @@ use thiserror::Error;
 
 pub use self::after_streams::{AfterStream, AfterStreams};
 pub use self::aliases::{Alias, Aliases};
+pub use self::blocked_songs::{BlockedSong, BlockedSongs};
 pub use self::commands::{Command, Commands};
 pub use self::matcher::Captures;
 pub use self::promotions::{Promotion, Promotions};
