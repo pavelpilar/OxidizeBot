@@ -446,6 +446,9 @@ async fn try_main(
         .update(db::Promotions::load(db.clone()).await?)
         .await;
     injector.update(db::Themes::load(db.clone()).await?).await;
+    injector
+        .update(db::BlockedSongs::load(db.clone()).await?)
+        .await;
 
     let message_bus = Arc::new(bus::Bus::new());
     let global_bus = Arc::new(bus::Bus::new());

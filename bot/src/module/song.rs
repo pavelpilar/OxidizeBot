@@ -1,6 +1,7 @@
 use crate::auth::Scope;
 use crate::command;
 use crate::currency::Currency;
+use crate::db::BlockedSongs;
 use crate::irc;
 use crate::module;
 use crate::player;
@@ -23,6 +24,7 @@ pub struct Handler {
     request_help_cooldown: Mutex<Cooldown>,
     request_reward: settings::Var<u32>,
     currency: injector::Var<Option<Currency>>,
+    blocked_songs: injector::Var<Option<BlockedSongs>>,
     spotify: Constraint,
     youtube: Constraint,
 }
@@ -823,6 +825,7 @@ impl module::Module for Module {
         }: module::HookContext<'_>,
     ) -> Result<()> {
         let currency = injector.var().await?;
+        let blocked_songs = injector.var::<BlockedSongs>().await?;
         let settings = settings.scoped("song");
 
         let enabled = settings.var("enabled", false).await?;
@@ -876,6 +879,7 @@ impl module::Module for Module {
                 player: shared_player,
                 request_reward,
                 currency,
+                blocked_songs,
                 spotify,
                 youtube,
             },
