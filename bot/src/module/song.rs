@@ -39,6 +39,7 @@ impl Handler {
         }
 
         let currency: Option<Currency> = self.currency.load().await;
+        let blocked_songs = self.blocked_songs.load().await;
         let request_reward = self.request_reward.load().await;
         let spotify = self.spotify.clone();
         let youtube = self.youtube.clone();
@@ -115,6 +116,14 @@ impl Handler {
                 what = what
             );
             return Ok(());
+        }
+
+        if let Some(blocked_songs) = blocked_songs {
+            if blocked_songs.exists(&track_id).await? {
+                user.respond("This track is blocked from song request")
+                    .await;
+                return Ok(())
+            }
         }
 
         let max_duration = match track_id {
@@ -277,10 +286,7 @@ impl Handler {
                 return Ok(());
             }
             Err(AddTrackError::TrackBlocked) => {
-                respond!(
-                    user,
-                    "That song has been blocked from song request"
-                );
+                respond!(user, "That song has been blocked from song request");
 
                 return Ok(());
             }
@@ -687,11 +693,17 @@ impl command::Handler for Handler {
             Some("block") => {
                 ctx.check_scope(Scope::SongEditQueue).await?;
 
+                // TODO: Do something if blocked_songs is None
+                let blocked_songs = match self.blocked_songs.load().await {
+                    Some(blocked_songs) => blocked_songs,
+                    None => return Ok(()),
+                };
+
                 match ctx.next().as_deref() {
                     Some("current") => match player.current().await {
                         Some(current) => {
-                            player
-                                .block_track_id(ctx.user.name().unwrap(), &current.item.track_id)
+                            blocked_songs
+                                .push(&current.item.track_id, ctx.user.name().unwrap())
                                 .await?;
                             player.skip().await?;
                             ctx.respond(format!(
@@ -707,8 +719,8 @@ impl command::Handler for Handler {
                     Some(arg) => {
                         match TrackId::parse_with_urls(arg) {
                             Ok(track_id) => {
-                                match player
-                                    .block_track_id(ctx.user.name().unwrap(), &track_id)
+                                match blocked_songs
+                                    .push(&track_id, ctx.user.name().unwrap())
                                     .await
                                 {
                                     Ok(_) => {
@@ -726,11 +738,12 @@ impl command::Handler for Handler {
                             }
                             Err(_) => {
                                 let n = parse_block_queue_position(arg).await?;
-                                let item = player
-                                    .block_queued_song(ctx.user.name().unwrap(), n)
-                                    .await?;
+                                let item = player.remove_at(n).await?;
                                 match item {
                                     Some(item) => {
+                                        blocked_songs
+                                            .push(&item.track_id, ctx.user.name().unwrap())
+                                            .await?;
                                         ctx.respond(format!(
                                             "Blocked song {} and removed it from queue",
                                             item.track.name()
