@@ -517,25 +517,62 @@ impl command::Handler for Handler {
                 let user = user.to_lowercase();
 
                 let result = player
-                    .find(|item| item.user.as_ref().map(|u| *u == user).unwrap_or_default())
+                    .find(
+                        |item| item.user.as_ref().map(|u| *u == user).unwrap_or_default(),
+                        false,
+                    )
                     .await;
 
                 match result {
                     Some((when, ref item)) if when.as_secs() == 0 => {
-                        if your {
-                            respond!(ctx, "Your song is currently playing");
-                        } else {
-                            respond!(ctx, "{}'s song {} is currently playing", user, item.what());
+                        // if user's song is currently playing, find the next one
+                        let result = player
+                            .find(
+                                |item| item.user.as_ref().map(|u| *u == user).unwrap_or_default(),
+                                true,
+                            )
+                            .await;
+
+                        match result {
+                            Some((when, item)) => {
+                                let when = utils::compact_duration(&when);
+
+                                if your {
+                                    respond!(
+                                        ctx,
+                                        "Your song is currently playing, your next song {} will play in {}", 
+                                        item.what(),
+                                        when
+                                    );
+                                } else {
+                                    respond!(
+                                        ctx,
+                                        "{}'s song is currently playing, their next song {} will play in {}",
+                                        user,
+                                        item.what(),
+                                        when
+                                    );
+                                }
+                            }
+                            None => {
+                                if your {
+                                    respond!(ctx, "Your song is currently playing");
+                                } else {
+                                    respond!(
+                                        ctx,
+                                        "{}'s song {} is currently playing",
+                                        user,
+                                        item.what()
+                                    );
+                                }
+                            }
                         }
                     }
                     Some((when, item)) => {
                         let when = utils::compact_duration(&when);
 
                         if your {
-                            respond!(
-                                ctx,
-                                format!("Your song {} will play in {}", item.what(), when)
-                            );
+                            respond!(ctx, "Your song {} will play in {}", item.what(), when);
                         } else {
                             respond!(ctx, "{}'s song {} will play in {}", user, item.what(), when);
                         }

@@ -600,13 +600,14 @@ impl Player {
     pub async fn find(
         &self,
         mut predicate: impl FnMut(&Item) -> bool,
+        skip_current: bool,
     ) -> Option<(Duration, Arc<Item>)> {
         let inner = self.inner.read().await;
 
         let mut duration = Duration::default();
 
         if let Some(c) = inner.injector.get::<Song>().await {
-            if predicate(&c.item) {
+            if !skip_current && predicate(&c.item) {
                 return Some((Default::default(), c.item.clone()));
             }
 
