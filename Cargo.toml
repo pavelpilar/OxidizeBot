@@ -1,13 +1,8 @@
 [workspace]
 
-members = [
-    "bot",
-    "web",
-]
-
-exclude = [
-    "tools/builder"
-]
+default-members = ["bot"]
+members = ["bot", "web"]
+exclude = ["tools/builder"]
 
 [profile.release]
 opt-level = 'z'
@@ -17,4 +12,4 @@ panic = "abort"
 debug = true
 
 [patch.crates-io]
-tokio = { git = "https://github.com/udoprog/tokio", branch = "rwlock-map" }
+tokio = { git = "https://github.com/tokio-rs/tokio", branch = "v0.2.x" }

@@ -67,7 +67,7 @@ pub(crate) struct ContextInner {
     /// A hook that can be installed to peek at all incoming messages.
     pub(crate) message_hooks: sync::RwLock<slab::Slab<Box<dyn MessageHook>>>,
     /// Shutdown handler.
-    pub(crate) shutdown: utils::Shutdown,
+    pub(crate) restart: utils::Restart,
 }
 
 /// Context for a single command invocation.
@@ -90,8 +90,8 @@ impl Context {
     }
 
     /// Signal that the bot should try to shut down.
-    pub async fn shutdown(&self) -> bool {
-        self.inner.shutdown.shutdown().await
+    pub async fn restart(&self) -> bool {
+        self.inner.restart.restart().await
     }
 
     /// Setup the specified hook.
@@ -143,7 +143,7 @@ impl Context {
             if let Some(duration) = cooldown.check(now.clone()) {
                 self.respond(format!(
                     "Cooldown in effect for {}",
-                    utils::compact_duration(&duration),
+                    utils::compact_duration(duration),
                 ))
                 .await;
 
@@ -159,6 +159,15 @@ impl Context {
     /// Respond to the user with a message.
     pub async fn respond(&self, m: impl fmt::Display) {
         self.user.respond(m).await;
+    }
+
+    /// Render an iterable of results, that implements display.
+    pub async fn respond_lines<I>(&self, results: I, empty: &str)
+    where
+        I: IntoIterator,
+        I::Item: fmt::Display,
+    {
+        self.user.respond_lines(results, empty).await
     }
 
     /// Send a privmsg to the channel.
