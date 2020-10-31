@@ -22,6 +22,7 @@ import YouTube from "./components/YouTube";
 import Chat from "./components/Chat";
 import Authorization from "./components/Authorization";
 import ConfigurationPrompt from "./components/ConfigurationPrompt";
+import BlockedSongs from "./components/BlockedSongs";
 import * as semver from "semver";
 import logo from "./logo.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -43,6 +44,21 @@ class AfterStreamsPage extends React.Component {
     return (
       <RouteLayout>
         <AfterStreams api={this.api} />
+      </RouteLayout>
+    );
+  }
+}
+
+class BlockedSongsPage extends React.Component {
+  constructor(props) {
+    super(props);
+    this.api = new Api(utils.apiUrl());
+  }
+
+  render() {
+    return (
+      <RouteLayout>
+        <BlockedSongs api={this.api} />
       </RouteLayout>
     );
   }
@@ -352,6 +368,9 @@ class Layout extends React.Component {
                 <NavDropdown.Item as={Link} active={path === "/chat"} to="/chat" target="chat">
                   Chat
                 </NavDropdown.Item>
+                <NavDropdown.Item as={Link} active={path === "/blocked-songs"} to="/blocked-songs">
+                  Blocked Songs
+                </NavDropdown.Item>
               </NavDropdown>
             </Nav>
 
@@ -380,6 +399,7 @@ function AppRouter() {
     <Router>
       <Route path="/" exact component={IndexPage} />
       <Route path="/after-streams" exact component={AfterStreamsPage} />
+      <Route path="/blocked-songs" exact component={BlockedSongsPage} />
       <Route path="/settings" exact component={SettingsPage} />
       <Route path="/cache" exact component={CachePage} />
       <Route path="/modules" component={ModulesPage} />
