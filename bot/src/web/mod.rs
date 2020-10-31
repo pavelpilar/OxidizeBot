@@ -17,6 +17,7 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
 use std::net::SocketAddr;
+use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::{RwLock, RwLockReadGuard};
 use warp::{body, filters, path, Filter as _};
@@ -786,6 +787,7 @@ struct Api {
     player: injector::Var<Option<player::Player>>,
     after_streams: injector::Var<Option<db::AfterStreams>>,
     currency: injector::Var<Option<Currency>>,
+    blocked_songs: injector::Var<Option<db::BlockedSongs>>,
     latest: injector::Var<Option<api::github::Release>>,
 }
 
@@ -894,6 +896,26 @@ impl Api {
         Ok(warp::reply::json(&EMPTY))
     }
 
+    /// Access underlying blocked songs abstraction.
+    async fn blocked_songs(&self) -> Result<RwLockReadGuard<'_, db::BlockedSongs>> {
+        match RwLockReadGuard::try_map(self.blocked_songs.read().await, |c| c.as_ref()) {
+            Ok(out) => Ok(out),
+            Err(_) => bail!("blocked songs not configured"),
+        }
+    }
+
+    /// Get the list of blocked songs.
+    async fn get_blocked_songs(&self) -> Result<impl warp::Reply> {
+        let blocked_songs = self.blocked_songs().await?.list().await?;
+        Ok(warp::reply::json(&blocked_songs))
+    }
+
+    /// Delete a blocked songs with the given Track ID.
+    async fn delete_blocked_song(&self, id: &TrackId) -> Result<impl warp::Reply> {
+        self.blocked_songs().await?.delete(id).await?;
+        Ok(warp::reply::json(&EMPTY))
+    }
+
     /// Import balances.
     async fn import_balances(
         self,
@@ -991,6 +1013,7 @@ pub async fn setup(
         player: player.clone(),
         after_streams: injector.var().await?,
         currency: injector.var().await?,
+        blocked_songs: injector.var().await?,
         latest,
     };
 
@@ -1042,6 +1065,31 @@ pub async fn setup(
                 move || {
                     let api = api.clone();
                     async move { api.get_after_streams().await.map_err(custom_reject) }
+                }
+            }))
+            .boxed();
+
+        let route = route
+            .or(warp::delete()
+                .and(path!("blocked-song" / String))
+                .and_then({
+                    let api = api.clone();
+                    move |id: String| {
+                        let api = api.clone();
+                        async move {
+                            // TODO: Implement deleting blocked songs
+                            Ok(warp::reply::json(&EMPTY))
+                        }
+                    }
+                }))
+            .boxed();
+
+        let route = route
+            .or(warp::get().and(warp::path("blocked-songs")).and_then({
+                let api = api.clone();
+                move || {
+                    let api = api.clone();
+                    async move { api.get_blocked_songs().await.map_err(custom_reject) }
                 }
             }))
             .boxed();

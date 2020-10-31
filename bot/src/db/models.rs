@@ -201,7 +201,7 @@ pub struct UpdateTheme<'a> {
     pub disabled: Option<bool>,
 }
 
-#[derive(Debug, diesel::Queryable, diesel::Insertable)]
+#[derive(Debug, serde::Serialize, diesel::Queryable, diesel::Insertable)]
 pub struct BlockedSong {
     pub track_id: TrackId,
     pub blocked_by: String,

@@ -75,6 +75,24 @@ export class Api {
   }
 
   /**
+   * Get a list of blocked songs
+   */
+  blockedSongs() {
+    return this.fetch("blocked-songs");
+  }
+
+  /**
+   * Delete a blocked song.
+   * 
+   * @param {string} id id of the blocked song to delete.
+   */
+  deleteBlockedSong(id) {
+    return this.fetch(`blocked-song/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  /**
    * Get the list of settings.
    */
   settings(filter = {}) {
