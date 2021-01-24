@@ -21,12 +21,7 @@ pub enum ParseTrackIdError {
     /// Requested a URI from a bad host, like youtube.com.
     #[error("bad host, expected: open.spotify.com")]
     BadHost(String),
-    #[error(
-        "bad URL, expected: \
-                       https://open.spotify.com/track/<id>, \
-                       https://youtube.com/watch?v=<id>, or \
-                       https://youtu.be/<id>"
-    )]
+    #[error("bad URL")]
     BadUrl(String),
     /// Argument had a bad URI.
     #[error("bad URI, expected: spotify:tracks:<id>")]

@@ -6,6 +6,7 @@ use crate::player::{AddTrackError, Player};
 use crate::settings;
 use crate::track_id::{self, TrackId};
 use anyhow::Result;
+use track_id::ParseTrackIdError;
 use std::fmt;
 use std::sync::Arc;
 
@@ -64,8 +65,7 @@ impl SongRequester {
                     // show other errors.
                     e => {
                         log::warn!("bad song request: {}", e);
-                        let e = format!("{} :(", e);
-                        return Err(RequestError::BadRequest(Some(e)));
+                        return Err(RequestError::ParseError(e));
                     }
                 }
 
@@ -286,6 +286,8 @@ pub(crate) enum RequestError {
     },
     /// Error raised when adding track.
     AddTrackError(AddTrackError),
+    /// Error raised when parsing URL/URI.
+    ParseError(ParseTrackIdError),
     /// A generic error.
     Error(anyhow::Error),
 }
@@ -334,6 +336,9 @@ impl fmt::Display for RequestError {
                 }
             }
             RequestError::AddTrackError(e) => {
+                write!(f, "{}", e)
+            }
+            RequestError::ParseError(e) => {
                 write!(f, "{}", e)
             }
             RequestError::Error(e) => {

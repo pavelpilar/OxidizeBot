@@ -70,7 +70,10 @@ impl Handler {
                 },
                 requester::RequestError::Error(e) => {
                     return Err(e);
-                }
+                },
+                requester::RequestError::ParseError(e) => {
+                    // TODO: Response based on allowed requests
+                },
                 e => {
                     respond!(user, "{}", e);
                 }
