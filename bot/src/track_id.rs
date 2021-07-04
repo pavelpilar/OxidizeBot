@@ -1,5 +1,5 @@
 pub use crate::spotify_id::SpotifyId;
-use std::fmt;
+use std::{fmt, str::FromStr};
 use thiserror::Error;
 
 static YOUTUBE_URL: &str = "https://youtu.be";
@@ -24,7 +24,7 @@ pub enum ParseTrackIdError {
     #[error("bad URL")]
     BadUrl(String),
     /// Argument had a bad URI.
-    #[error("bad URI, expected: spotify:tracks:<id>")]
+    #[error("bad URI, expected: spotify:track:<id>")]
     BadUri(String),
     /// Failed to parse an ID.
     #[error("bad spotify track id (expected base62): {}", _0)]
@@ -107,6 +107,8 @@ impl TrackId {
                     let id = match parts.as_slice() {
                         ["", "track", id] => SpotifyId::from_base62(id)
                             .map_err(|_| ParseTrackIdError::BadBase62((*id).to_string()))?,
+                        // Check if album url contains track id in query
+                        ["", "album", _] => get_spotify_id_from_query(&url)?,
                         _ => return Err(ParseTrackIdError::BadUrl(url.to_string())),
                     };
 
@@ -165,6 +167,20 @@ impl TrackId {
             match *host {
                 url::Host::Domain("youtu.be") => true,
                 _ => false,
+            }
+        }
+
+        fn get_spotify_id_from_query(url: &url::Url) -> Result<SpotifyId, ParseTrackIdError> {
+            let res = url.query_pairs().find_map(|x| match &*x.0 {
+                "highlight" => Some(x.1),
+                _ => None,
+            });
+            match res {
+                Some(uri) => match TrackId::from_str(&*uri)? {
+                    TrackId::Spotify(id) => Ok(id),
+                    _ => return Err(ParseTrackIdError::BadUri(uri.into_owned())),
+                },
+                None => return Err(ParseTrackIdError::BadUrl(url.to_string())),
             }
         }
     }
